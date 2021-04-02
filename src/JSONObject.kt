@@ -1,9 +1,9 @@
-class JSONObject() {
+class JSONObject() : Visitor {
 
     val components = hashMapOf<String, Any?>()
 
     fun add(key: String, value: Any?): JSONObject {
-        if (value != null && (value is String || value is Boolean || value is Int || value is Float || value is JSONArray)) {
+        if (value != null && (value is String || value is Boolean || value is Int || value is Float || value is JSONArray || value is JSONObject)) {
             this.components.put(key, value)
         }else if (value == null) {
             this.components.put(key, "null")
@@ -15,6 +15,18 @@ class JSONObject() {
         return this
     }
 
+    override fun JSONTransform(key: String, string: String): String {
+        return "\"$key\":\"$string\""
+    }
+
+    override fun JSONTransform(key: String, number: Any): String {
+        return "\"$key\":$number"
+    }
+
+    override fun JSONTransform(key: String, boolean: Boolean): String {
+        return if (boolean) "\"$key\": \"true\"" else "\"$key\": \"false\""
+    }
+
     override fun toString(): String {
         val sb = StringBuilder()
         var first = true
@@ -22,11 +34,12 @@ class JSONObject() {
             if (first) first = false else sb.append(",")
             val temp = it.value
             when (temp) {
-                is String -> sb.append("\"").append(it.key).append("\":\"").append(temp).append("\"")
-                is Boolean -> sb.append("\"").append(it.key).append("\":").append(temp)
-                is Int -> sb.append("\"").append(it.key).append("\":").append(temp)
-                is Float -> sb.append("\"").append(it.key).append("\":").append(temp)
-                is JSONArray -> sb.append("\"").append(it.key).append("\":").append((temp as JSONArray).toString())
+                is String -> sb.append(JSONTransform(it.key, temp))
+                is Boolean -> sb.append(JSONTransform(it.key, temp))
+                is Int -> sb.append(JSONTransform(it.key, temp))
+                is Float -> sb.append(JSONTransform(it.key, temp))
+                is JSONArray -> sb.append("\"").append(it.key).append("\":").append((temp).toString())
+                is JSONObject -> sb.append("\"").append(it.key).append("\":").append(temp.toString())
                 else -> {
                     print("No match found")
                 }

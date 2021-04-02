@@ -24,11 +24,11 @@ abstract class Element(val name: String, val parent: Composite?) {
     init {
         parent?.children?.add(this)
     }
-    abstract fun accept(v: Visitor)
+    abstract fun accept(v: VisitorEx)
 }
 
 class Leaf(name: String, parent: Composite) : Element(name, parent) {
-    override fun accept(v: Visitor) {
+    override fun accept(v: VisitorEx) {
         v.visit(this)
     }
 }
@@ -36,7 +36,7 @@ class Leaf(name: String, parent: Composite) : Element(name, parent) {
 class Composite(name: String, parent: Composite? = null) : Element(name,parent) {
     val children = mutableListOf<Element>()
     val size get() = children.size
-    override fun accept(v: Visitor) {
+    override fun accept(v: VisitorEx) {
         if (v.visit(this))
             children.forEach {
                 it.accept(v)
@@ -44,7 +44,7 @@ class Composite(name: String, parent: Composite? = null) : Element(name,parent) 
     }
 }
 
-interface Visitor {
+interface VisitorEx {
     fun visit(c: Composite): Boolean = true
     fun visit(l: Leaf) {}
 }
@@ -62,7 +62,7 @@ fun main() {
     val c = Composite("c", a)
     Leaf("5",c)
 
-    val v = object : Visitor {
+    val v = object : VisitorEx {
         var count = 0
         override fun visit(l: Leaf) {
             count++

@@ -1,15 +1,4 @@
-class JSONArray {
-
-    val elements = mutableListOf<JSONObject>()
-
-    fun add(value: JSONObject?): JSONArray? {
-        if (value != null) {
-            elements.add(value)
-        } else {
-            throw IllegalArgumentException("Value must be JSONObject, was blah")
-        }
-        return this
-    }
+class JSONArray(val elements: MutableList<*>) {
 
     override fun toString(): String {
         val sb = StringBuilder()
