@@ -1,4 +1,10 @@
-class JSONArray(val elements: MutableList<*>) {
+class JSONArray {
+
+    private val elements = mutableListOf<JSONObject>()
+
+    fun add(item: JSONObject) {
+        elements.add(item)
+    }
 
     override fun toString(): String {
         val sb = StringBuilder()

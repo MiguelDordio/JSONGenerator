@@ -4,6 +4,7 @@ class Person(
     val age: Int,
     val occupation: String,
     val contacts: Contacts?,
-    val address: MutableList<*>?
+    val address: MutableList<*>?,
+    val extras: MutableList<*>?
 ) {
 }

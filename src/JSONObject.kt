@@ -1,8 +1,8 @@
 class JSONObject() : Visitor {
 
-    val components = hashMapOf<String, Any?>()
+    private val components = hashMapOf<String, Any?>()
 
-    fun add(key: String, value: Any?): JSONObject {
+    fun add(key: String, value: Any?) {
         if (value != null && (value is String || value is Boolean || value is Int || value is Float || value is JSONArray || value is JSONObject)) {
             this.components.put(key, value)
         }else if (value == null) {
@@ -12,11 +12,10 @@ class JSONObject() : Visitor {
                 "Value must be either String, Boolean, Integer or Float, was "
             )
         }
-        return this
     }
 
     override fun JSONTransform(key: String, string: String): String {
-        return "\"$key\":\"$string\""
+        return if (key != "") "\"$key\":\"$string\"" else "\"$string\""
     }
 
     override fun JSONTransform(key: String, number: Any): String {
@@ -39,13 +38,13 @@ class JSONObject() : Visitor {
                 is Int -> sb.append(JSONTransform(it.key, temp))
                 is Float -> sb.append(JSONTransform(it.key, temp))
                 is JSONArray -> sb.append("\"").append(it.key).append("\":").append((temp).toString())
-                is JSONObject -> sb.append("\"").append(it.key).append("\":").append(temp.toString())
+                is JSONObject -> if(it.key != "") sb.append("\"").append(it.key).append("\":").append(temp.toString()) else sb.append(temp.toString())
                 else -> {
                     print("No match found")
                 }
             }
         }
-        return "{$sb}"
+        return if(components.size > 1) "{$sb}" else "$sb"
     }
 
     fun prettyPrintJSON(unformattedJsonString: String): String? {
