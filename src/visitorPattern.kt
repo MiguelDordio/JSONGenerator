@@ -20,7 +20,7 @@ fun countComposites(c: Composite): Int {
     return count
 }
 
-abstract class Element(val name: String, val parent: Composite?) {
+abstract class Element(val name: String, parent: Composite?) {
     init {
         parent?.children?.add(this)
     }
@@ -57,7 +57,7 @@ fun main() {
     Leaf("3",a)
 
     val b = Composite(".b", a)
-    Leaf("4",a)
+    Leaf("4",b)
 
     val c = Composite("c", a)
     Leaf("5",c)
@@ -72,7 +72,9 @@ fun main() {
             return !c.name.startsWith(".")
         }
     }
-    a.accept(v)
-    println(v.count)
+    //a.accept(v)
+    //println(v.count)
+
+    println(countLeafs(a))
 
 }

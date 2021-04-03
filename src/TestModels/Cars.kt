@@ -1,3 +1,7 @@
+package TestModels
+
+import JSONAnnotation
+
 @JSONAnnotation
 class Cars(
         val brand: String,

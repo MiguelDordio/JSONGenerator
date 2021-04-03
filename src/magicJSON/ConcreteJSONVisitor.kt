@@ -1,53 +1,57 @@
-class JSONObject() : Visitor {
+package magicJSON
+
+class ConcreteJSONVisitor : JSONVisitor {
 
     private val components = hashMapOf<String, Any?>()
+    private var jsonText = StringBuilder()
+    private var firstObject: Boolean = true
 
-    fun add(key: String, value: Any?) {
-        if (value != null && (value is String || value is Boolean || value is Int || value is Float || value is JSONArray || value is JSONObject)) {
-            this.components.put(key, value)
-        }else if (value == null) {
-            this.components.put(key, "null")
-        } else {
-            throw IllegalArgumentException(
-                "Value must be either String, Boolean, Integer or Float, was "
-            )
+    fun applyJSON(obj: Any)  {
+        val node = JSONObject("", obj)
+        node.accept(this)
+    }
+
+    override fun visitJSONObject(node: JSONObject): Boolean {
+        if (firstObject) firstObject = false
+        else {
+            if (node.key != "") jsonText.append("\"${node.key?.capitalize()}\":{")
+            else jsonText.append("{")
         }
+        node.key?.let { components.put(it, node.value) }
+        return true
     }
 
-    override fun JSONTransform(key: String, string: String): String {
-        return if (key != "") "\"$key\":\"$string\"" else "\"$string\""
+    override fun visitExitJSONObject(): Boolean {
+        jsonText.setLength(jsonText.length - 1)
+        jsonText.append("},")
+        return true
     }
 
-    override fun JSONTransform(key: String, number: Any): String {
-        return "\"$key\":$number"
+    override fun visitJSONPrimitive(node: JSONPrimitive): Boolean {
+        jsonText.append(node.generateJSON() + ",")
+        node.key.let { components.put(it, node) }
+        return true
     }
 
-    override fun JSONTransform(key: String, boolean: Boolean): String {
-        return if (boolean) "\"$key\": \"true\"" else "\"$key\": \"false\""
+    override fun visitJSONArray(node: JSONArray): Boolean {
+        jsonText.append("\"${node.key}\":[")
+        node.key.let { components.put(it, node.itemsList) }
+        return true
     }
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        var first = true
-        components.forEach {
-            if (first) first = false else sb.append(",")
-            val temp = it.value
-            when (temp) {
-                is String -> sb.append(JSONTransform(it.key, temp))
-                is Boolean -> sb.append(JSONTransform(it.key, temp))
-                is Int -> sb.append(JSONTransform(it.key, temp))
-                is Float -> sb.append(JSONTransform(it.key, temp))
-                is JSONArray -> sb.append("\"").append(it.key).append("\":").append((temp).toString())
-                is JSONObject -> if(it.key != "") sb.append("\"").append(it.key).append("\":").append(temp.toString()) else sb.append(temp.toString())
-                else -> {
-                    print("No match found")
-                }
-            }
-        }
-        return if(components.size > 1) "{$sb}" else "$sb"
+    override fun visitExitJSONArray(): Boolean {
+        jsonText.setLength(jsonText.length - 1)
+        jsonText.append("],")
+        return true
     }
 
-    fun prettyPrintJSON(unformattedJsonString: String): String? {
+    fun objectToJSON(): String {
+        jsonText.setLength(jsonText.length - 1)
+        val finalJSONText: String = if(components.size > 1) "{$jsonText}" else "$jsonText"
+        return prettyPrintJSON(finalJSONText)
+    }
+
+    fun prettyPrintJSON(unformattedJsonString: String): String {
         val prettyJSONBuilder = java.lang.StringBuilder()
         var indentLevel = 0
         var inQuote = false
@@ -94,4 +98,5 @@ class JSONObject() : Visitor {
             stringBuilder.append("  ")
         }
     }
+
 }
