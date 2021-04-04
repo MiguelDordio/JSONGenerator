@@ -76,6 +76,7 @@ class JSONInspector : JSONVisitor {
         val prettyJSONBuilder = java.lang.StringBuilder()
         var indentLevel = 0
         var inQuote = false
+        var inArray = false
         for (charFromUnformattedJson in unformattedJsonString.toCharArray()) {
             when (charFromUnformattedJson) {
                 '"' -> {
@@ -87,14 +88,36 @@ class JSONInspector : JSONVisitor {
                     if (inQuote) {
                         prettyJSONBuilder.append(charFromUnformattedJson)
                     }
-                '{', '[' -> {
+                '{' -> {
+                    if (inArray) {
+                        if (prettyJSONBuilder[prettyJSONBuilder.length - 4] != ',')
+                            prettyJSONBuilder.setLength(prettyJSONBuilder.length - 3)
+                        prettyJSONBuilder.append(charFromUnformattedJson)
+                        indentLevel++
+                        appendIndentedNewLine(indentLevel, prettyJSONBuilder)
+                    } else {
+                        // Starting a new block: increase the indent level
+                        prettyJSONBuilder.append(charFromUnformattedJson)
+                        indentLevel++
+                        appendIndentedNewLine(indentLevel, prettyJSONBuilder)
+                    }
+                }
+                '[' -> {
+                    inArray = true
                     // Starting a new block: increase the indent level
                     prettyJSONBuilder.append(charFromUnformattedJson)
                     indentLevel++
                     appendIndentedNewLine(indentLevel, prettyJSONBuilder)
                 }
-                '}', ']' -> {
+                '}' -> {
                     // Ending a new block; decrese the indent level
+                    indentLevel--
+                    appendIndentedNewLine(indentLevel, prettyJSONBuilder)
+                    prettyJSONBuilder.append(charFromUnformattedJson)
+                }
+                ']' -> {
+                    // Ending a new block; decrese the indent level
+                    inArray = false
                     indentLevel--
                     appendIndentedNewLine(indentLevel, prettyJSONBuilder)
                     prettyJSONBuilder.append(charFromUnformattedJson)
@@ -106,6 +129,9 @@ class JSONInspector : JSONVisitor {
                         appendIndentedNewLine(indentLevel, prettyJSONBuilder)
                     }
                 }
+                ':' -> {
+                    prettyJSONBuilder.append("$charFromUnformattedJson ")
+                }
                 else -> prettyJSONBuilder.append(charFromUnformattedJson)
             }
         }
@@ -116,7 +142,7 @@ class JSONInspector : JSONVisitor {
         stringBuilder.append("\n")
         for (i in 0 until indentLevel) {
             // Assuming indention using 2 spaces
-            stringBuilder.append("  ")
+            stringBuilder.append("\t")
         }
     }
 
@@ -124,7 +150,9 @@ class JSONInspector : JSONVisitor {
      * Misc methods
      */
 
-    fun getAllStrings(): MutableList<String> {
+    fun getAllStrings(obj: Any): MutableList<String> {
+        val node = JSONObject("", obj)
+        node.accept(this)
         return allStrings
     }
 }

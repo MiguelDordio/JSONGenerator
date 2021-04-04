@@ -1,6 +1,6 @@
 package testModels
 
-import JSONAnnotation
+import magicJSON.JSONAnnotation
 
 @JSONAnnotation
 class Machine(
