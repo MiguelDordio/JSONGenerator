@@ -2,19 +2,23 @@ package magicJSON
 
 class JSONPrimitive(val key: String, val value: Any? = null) : JSONItem() {
 
-    fun JSONString(key: String, string: String): String {
+    private fun jsonChar(key: String, character: Char): String {
+        return if (key != "") "\"$key\":\"$character\"" else "\"$character\""
+    }
+
+    private fun jsonString(key: String, string: String): String {
         return if (key != "") "\"$key\":\"$string\"" else "\"$string\""
     }
 
-    fun JSONNumber(key: String, number: Any): String {
+    private fun jsonNumber(key: String, number: Any): String {
         return "\"$key\":$number"
     }
 
-    fun JSONBoolean(key: String, boolean: Boolean): String {
-        return if (boolean) "\"$key\": \"true\"" else "\"$key\": \"false\""
+    private fun jsonBoolean(key: String, boolean: Boolean): String {
+        return if (boolean) "\"$key\":\"true\"" else "\"$key\":\"false\""
     }
 
-    fun JSONNull(key: String): String {
+    private fun jsonNull(key: String): String {
         return "\"$key\":\"null\""
     }
 
@@ -22,18 +26,18 @@ class JSONPrimitive(val key: String, val value: Any? = null) : JSONItem() {
         val sb = StringBuilder()
         if (value != null) {
             when (value) {
-                is String -> sb.append(JSONString(key, value))
-                is Boolean -> sb.append(JSONBoolean(key, value))
-                is Int -> sb.append(JSONNumber(key, value))
-                is Float -> sb.append(JSONNumber(key, value))
-                is Double -> sb.append(JSONNumber(key, value))
-                is Char -> sb.append(JSONString(key, value as String))
+                is String -> sb.append(jsonString(key, value))
+                is Boolean -> sb.append(jsonBoolean(key, value))
+                is Int -> sb.append(jsonNumber(key, value))
+                is Float -> sb.append(jsonNumber(key, value))
+                is Double -> sb.append(jsonNumber(key, value))
+                is Char -> sb.append(jsonChar(key, value))
                 else -> {
                     print("No match found")
                 }
             }
         } else
-            sb.append(JSONNull(key))
+            sb.append(jsonNull(key))
         return "$sb"
     }
 

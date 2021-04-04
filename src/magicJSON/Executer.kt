@@ -1,9 +1,9 @@
 package magicJSON
 
-import TestModels.Cars
-import TestModels.Contacts
-import TestModels.Person
-import TestModels.RelationShipStatus
+import testModels.Cars
+import testModels.Contacts
+import testModels.Person
+import testModels.RelationShipStatus
 
 
 /**
@@ -17,9 +17,12 @@ fun main() {
     val car = Cars("Cloudy", "Biggy", 2008)
     val extras: MutableList<Any> = mutableListOf(relationShipStatus, car)
     val address: MutableList<Any> = mutableListOf("Rua da vida", "Aqui não passas")
-    val person = Person("Miguel", 23, 1.79, true,null, contacts, address, extras)
+    val person = Person("Miguel", 23, 1.79, 65.4f, true,null,
+            contacts, address, extras, 'c')
 
-    val jsonVisitor = ConcreteJSONVisitor()
-    jsonVisitor.applyJSON(person)
-    println(jsonVisitor.objectToJSON())
+    val jsonVisitor = JSONInspector()
+    println(jsonVisitor.objectToJSONPrettyPrint(person))
+
+    println("All Strings")
+    println(jsonVisitor.getAllStrings())
 }

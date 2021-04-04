@@ -1,15 +1,16 @@
 package magicJSON
 
-class ConcreteJSONVisitor : JSONVisitor {
+class JSONInspector : JSONVisitor {
 
     private val components = hashMapOf<String, Any?>()
     private var jsonText = StringBuilder()
     private var firstObject: Boolean = true
 
-    fun applyJSON(obj: Any)  {
-        val node = JSONObject("", obj)
-        node.accept(this)
-    }
+    private val allStrings = mutableListOf<String>()
+
+    /**
+     * Core methods
+     */
 
     override fun visitJSONObject(node: JSONObject): Boolean {
         if (firstObject) firstObject = false
@@ -30,6 +31,10 @@ class ConcreteJSONVisitor : JSONVisitor {
     override fun visitJSONPrimitive(node: JSONPrimitive): Boolean {
         jsonText.append(node.generateJSON() + ",")
         node.key.let { components.put(it, node) }
+
+        if (node.value is String)
+            allStrings.add(node.value)
+
         return true
     }
 
@@ -45,13 +50,22 @@ class ConcreteJSONVisitor : JSONVisitor {
         return true
     }
 
-    fun objectToJSON(): String {
+    fun objectToJSON(obj: Any): String {
+        val node = JSONObject("", obj)
+        node.accept(this)
+        jsonText.setLength(jsonText.length - 1)
+        return if(components.size > 1) "{$jsonText}" else "$jsonText"
+    }
+
+    fun objectToJSONPrettyPrint(obj: Any): String {
+        val node = JSONObject("", obj)
+        node.accept(this)
         jsonText.setLength(jsonText.length - 1)
         val finalJSONText: String = if(components.size > 1) "{$jsonText}" else "$jsonText"
         return prettyPrintJSON(finalJSONText)
     }
 
-    fun prettyPrintJSON(unformattedJsonString: String): String {
+    private fun prettyPrintJSON(unformattedJsonString: String): String {
         val prettyJSONBuilder = java.lang.StringBuilder()
         var indentLevel = 0
         var inQuote = false
@@ -99,4 +113,11 @@ class ConcreteJSONVisitor : JSONVisitor {
         }
     }
 
+    /**
+     * Misc methods
+     */
+
+    fun getAllStrings(): MutableList<String> {
+        return allStrings
+    }
 }
