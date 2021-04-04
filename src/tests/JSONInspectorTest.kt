@@ -5,10 +5,7 @@ import magicJSON.JSONPrimitive
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.Assertions
-import testModels.Contacts
-import testModels.Machine
-import testModels.Part
-import testModels.PartDescriptor
+import testModels.*
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -67,7 +64,31 @@ class JSONInspectorTest {
     }
 
     @Test
+    fun testWriteObjectWithLists() {
+        val petOwner = PetOwner("John", mutableListOf("Dog", "Cat", "Turtle"))
+        val expectedJSON = "{\"owner\":\"John\",\"pets\":[\"Dog\",\"Cat\",\"Turtle\"]}"
+        val jsonVisitor = JSONInspector()
+        Assertions.assertEquals(expectedJSON, jsonVisitor.objectToJSON(petOwner))
+    }
+
+    @Test
     fun testWriteObjectWithMaps() {
+        val parts = mapOf(
+                "Electrical"
+                        to Part("Electrical", "Part1", "Heating Element", "B293"),
+                "Exterior"
+                        to Part("Exterior", "Part2", "Lever", "18A"))
+        val machine = Machine("Toaster", parts)
+        val expectedJSON = "{\"name\":\"Toaster\",\"parts\":{" +
+                "\"Electrical\":{\"compat\":\"B293\",\"description\":\"Heating Element\",\"group\":\"Electrical\",\"id\":\"Part1\"}," +
+                "\"Exterior\":{\"compat\":\"18A\",\"description\":\"Lever\",\"group\":\"Exterior\",\"id\":\"Part2\"}" +
+                "}}"
+        val jsonVisitor = JSONInspector()
+        Assertions.assertEquals(expectedJSON, jsonVisitor.objectToJSON(machine))
+    }
+
+    @Test
+    fun testWriteObjectWithComplexMaps() {
         val parts = mapOf(
                 PartDescriptor("Electrical", "Descriptor1")
                 to Part("Electrical", "Part1", "Heating Element", "B293"),

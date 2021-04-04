@@ -29,3 +29,8 @@ class Contacts(val email: String,
 class RelationShipStatus(
         val maritalStatus: String,
         val birthday: String)
+
+@JSONAnnotation
+class PetOwner(
+        val owner: String,
+        val pets: MutableList<*>)
