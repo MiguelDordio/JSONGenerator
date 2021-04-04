@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.Assertions
 import testModels.Contacts
+import testModels.Machine
+import testModels.Part
+import testModels.PartDescriptor
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -61,5 +64,21 @@ class JSONInspectorTest {
         val expectedJSON = "{\"email\":\"mig@gmail.com\",\"phone\":\"999888777\"}"
         val jsonVisitor = JSONInspector()
         Assertions.assertEquals(expectedJSON, jsonVisitor.objectToJSON(contacts))
+    }
+
+    @Test
+    fun testWriteObjectWithMaps() {
+        val parts = mapOf(
+                PartDescriptor("Electrical", "Descriptor1")
+                to Part("Electrical", "Part1", "Heating Element", "B293"),
+                PartDescriptor("Exterior", "Descriptor2")
+                to Part("Exterior", "Part2", "Lever", "18A"))
+        val machine = Machine("Toaster", parts)
+        val expectedJSON = "{\"name\":\"Toaster\",\"parts\":{" +
+                "\"Electrical|Descriptor1\":{\"compat\":\"B293\",\"description\":\"Heating Element\",\"group\":\"Electrical\",\"id\":\"Part1\"}," +
+                "\"Exterior|Descriptor2\":{\"compat\":\"18A\",\"description\":\"Lever\",\"group\":\"Exterior\",\"id\":\"Part2\"}" +
+                "}}"
+        val jsonVisitor = JSONInspector()
+        Assertions.assertEquals(expectedJSON, jsonVisitor.objectToJSON(machine))
     }
 }

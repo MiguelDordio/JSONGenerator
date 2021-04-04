@@ -5,6 +5,7 @@ class JSONInspector : JSONVisitor {
     private val components = hashMapOf<String, Any?>()
     private var jsonText = StringBuilder()
     private var firstObject: Boolean = true
+    private var mapPrinting: Boolean = false
 
     private val allStrings = mutableListOf<String>()
 
@@ -38,15 +39,21 @@ class JSONInspector : JSONVisitor {
         return true
     }
 
-    override fun visitJSONArray(node: JSONArray): Boolean {
-        jsonText.append("\"${node.key}\":[")
+    override fun visitJSONArray(node: JSONArray, isMap: Boolean): Boolean {
+        if (isMap) {
+            jsonText.append("\"${node.key}\":{")
+            mapPrinting = true
+        } else jsonText.append("\"${node.key}\":[")
         node.key.let { components.put(it, node.itemsList) }
         return true
     }
 
     override fun visitExitJSONArray(): Boolean {
         jsonText.setLength(jsonText.length - 1)
-        jsonText.append("],")
+        if (mapPrinting) {
+            jsonText.append("},")
+            mapPrinting = false
+        } else jsonText.append("],")
         return true
     }
 

@@ -12,8 +12,17 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
             if ((it.returnType.classifier as KClass<*>).annotations.isNotEmpty()) {
                 val node = JSONObject(it.name, it.getter.call(value))
                 elements.add(node)
-            }else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
-                val jsonArray = JSONArray(it.name, it.getter.call(value) as MutableList<Any>)
+            } else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
+                val jsonArray = JSONArray(it.name, it.getter.call(value) as MutableList<Any>, false)
+                elements.add(jsonArray)
+            } else if (it.returnType.classifier == Map::class && it.getter.call(value) != null) {
+                val innerMap = it.getter.call(value) as Map<*, *>
+                val mapItems = mutableListOf<Any>()
+                innerMap.forEach { entry ->
+                    val innerObj = JSONObject(entry.key.toString(), entry.value)
+                    mapItems.add(innerObj)
+                }
+                val jsonArray = JSONArray(it.name, mapItems, true)
                 elements.add(jsonArray)
             } else {
                 val leaf = JSONPrimitive(it.name, it.getter.call(value))
