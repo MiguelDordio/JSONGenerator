@@ -73,7 +73,7 @@ class JSONInspector : JSONVisitor {
     }
 
     private fun prettyPrintJSON(unformattedJsonString: String): String {
-        val prettyJSONBuilder = java.lang.StringBuilder()
+        val prettyJSONBuilder = StringBuilder()
         var indentLevel = 0
         var inQuote = false
         var inArray = false

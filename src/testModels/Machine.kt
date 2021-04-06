@@ -1,14 +1,13 @@
 package testModels
 
-import magicJSON.JSONAnnotation
+import magicJSON.JSONClass
 
-@JSONAnnotation
 class Machine(
         val name: String,
         val parts: Map<*, Part>
 )
 
-@JSONAnnotation
+@JSONClass
 class PartDescriptor(
         val group: String,
         val id: String
@@ -19,7 +18,7 @@ class PartDescriptor(
     }
 }
 
-@JSONAnnotation
+@JSONClass
 class Part(
         val group: String,
         val id: String,

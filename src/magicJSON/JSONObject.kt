@@ -2,6 +2,7 @@ package magicJSON
 
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
+import kotlin.reflect.full.findAnnotation
 
 class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
 
@@ -9,7 +10,9 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
 
     private fun identify(value: Any) {
         value::class.declaredMemberProperties.forEach {
-            if ((it.returnType.classifier as KClass<*>).annotations.isNotEmpty()) {
+
+            if (it.findAnnotation<JSONObjectItem>() != null ||
+                    (it.returnType.classifier as KClass<*>).findAnnotation<JSONClass>() != null) {
                 val node = JSONObject(it.name, it.getter.call(value))
                 elements.add(node)
             } else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
@@ -25,9 +28,12 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
                 val jsonArray = JSONArray(it.name, mapItems, true)
                 elements.add(jsonArray)
             } else {
-                val leaf = JSONPrimitive(it.name, it.getter.call(value))
-                elements.add(leaf)
+                if (it.findAnnotation<JSONExcludeItem>() == null) {
+                    val leaf = JSONPrimitive(it.name, it.getter.call(value))
+                    elements.add(leaf)
+                }
             }
+
         }
     }
 

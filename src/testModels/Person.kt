@@ -1,8 +1,9 @@
 package testModels
 
-import magicJSON.JSONAnnotation
+import magicJSON.JSONClass
+import magicJSON.JSONExcludeItem
+import magicJSON.JSONObjectItem
 
-@JSONAnnotation
 class Person(
         val name: String,
         val age: Int?,
@@ -10,27 +11,35 @@ class Person(
         val weight: Float?,
         val isWonderfulPerson: Boolean?,
         val occupation: String?,
+        @JSONObjectItem
         val contacts: Contacts?,
         val address: MutableList<*>?,
         val extras: MutableList<*>?,
         val id: Char?)
 
-@JSONAnnotation
+@JSONClass
 class Cars(
         val brand: String,
         val model: String,
         val year: Int)
 
-@JSONAnnotation
 class Contacts(val email: String,
                val phone: String)
 
-@JSONAnnotation
+@JSONClass
 class RelationShipStatus(
         val maritalStatus: String,
         val birthday: String)
 
-@JSONAnnotation
 class PetOwner(
         val owner: String,
         val pets: MutableList<*>)
+
+class Boss(
+        val bossName: String,
+        @JSONExcludeItem
+        val role: String,
+        @JSONObjectItem
+        val contacts: Contacts?,
+        val extras: MutableList<*>?
+)

@@ -180,4 +180,16 @@ class JSONInspectorTest {
         val jsonVisitor = JSONInspector()
         Assertions.assertEquals(expectedStrings, jsonVisitor.getAllStrings(person))
     }
+
+    @Test
+    fun testExcludePropertyAndObjectPropertyAnnotation() {
+        val contacts = Contacts("mig@gmail.com", "999888777")
+        val relationShipStatus = RelationShipStatus("Married", "09-12-1979")
+        val car = Cars("Cloudy", "Biggy", 2009)
+        val extras: MutableList<Any> = mutableListOf(relationShipStatus, car)
+        val boss = Boss("Pedro", "Project Manager", contacts, extras)
+        val jsonObject = JSONInspector()
+        val expectedJSON = "{\"bossName\":\"Pedro\",\"Contacts\":{\"email\":\"mig@gmail.com\",\"phone\":\"999888777\"},\"extras\":[{\"birthday\":\"09-12-1979\",\"maritalStatus\":\"Married\"},{\"brand\":\"Cloudy\",\"model\":\"Biggy\",\"year\":2009}]}"
+        Assertions.assertEquals(expectedJSON, jsonObject.objectToJSON(boss))
+    }
 }
