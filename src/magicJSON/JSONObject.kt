@@ -3,6 +3,8 @@ package magicJSON
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.findAnnotation
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSubtypeOf
 
 class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
 
@@ -10,10 +12,9 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
 
     private fun identify(value: Any) {
         value::class.declaredMemberProperties.forEach {
-
-            if (it.findAnnotation<JSONObjectItem>() != null ||
-                    (it.returnType.classifier as KClass<*>).findAnnotation<JSONClass>() != null) {
-                val node = JSONObject(it.name, it.getter.call(value))
+            if (it.findAnnotation<JSONCustomField>() != null) {
+                val fieldName = it.findAnnotation<JSONCustomField>()?.name
+                val node = JSONObject(fieldName, it.getter.call(value))
                 elements.add(node)
             } else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
                 val jsonArray = JSONArray(it.name, it.getter.call(value) as MutableList<Any>, false)
@@ -27,13 +28,22 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
                 }
                 val jsonArray = JSONArray(it.name, mapItems, true)
                 elements.add(jsonArray)
+            } else if ((it.returnType.classifier as KClass<out Any>).isSubclassOf(Enum::class)) {
+                val node = JSONPrimitive(it.name, it.getter.call(value).toString())
+                elements.add(node)
             } else {
                 if (it.findAnnotation<JSONExcludeItem>() == null) {
-                    val leaf = JSONPrimitive(it.name, it.getter.call(value))
-                    elements.add(leaf)
+                    if (it.returnType.classifier == String::class || it.returnType.classifier == Int::class ||
+                            it.returnType.classifier == Double::class || it.returnType.classifier == Float::class ||
+                            it.returnType.classifier == Boolean::class || it.returnType.classifier == Char::class) {
+                        val node = JSONPrimitive(it.name, it.getter.call(value))
+                        elements.add(node)
+                    } else {
+                        val node = JSONObject(it.name, it.getter.call(value))
+                        elements.add(node)
+                    }
                 }
             }
-
         }
     }
 
@@ -52,6 +62,4 @@ class JSONObject(val key: String?, val value: Any? = null) : JSONItem() {
                 if (it is JSONArray) v.visitExitJSONArray()
             }
     }
-
-
 }

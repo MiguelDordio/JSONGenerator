@@ -1,13 +1,10 @@
 package testModels
 
-import magicJSON.JSONClass
-
 class Machine(
         val name: String,
         val parts: Map<*, Part>
 )
 
-@JSONClass
 class PartDescriptor(
         val group: String,
         val id: String
@@ -18,7 +15,6 @@ class PartDescriptor(
     }
 }
 
-@JSONClass
 class Part(
         val group: String,
         val id: String,

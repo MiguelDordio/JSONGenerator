@@ -1,8 +1,11 @@
 package testModels
 
-import magicJSON.JSONClass
+import magicJSON.JSONCustomField
 import magicJSON.JSONExcludeItem
-import magicJSON.JSONObjectItem
+
+enum class Direction {
+        NORTH, SOUTH, WEST, EAST
+}
 
 class Person(
         val name: String,
@@ -11,13 +14,11 @@ class Person(
         val weight: Float?,
         val isWonderfulPerson: Boolean?,
         val occupation: String?,
-        @JSONObjectItem
         val contacts: Contacts?,
         val address: MutableList<*>?,
         val extras: MutableList<*>?,
         val id: Char?)
 
-@JSONClass
 class Cars(
         val brand: String,
         val model: String,
@@ -26,7 +27,6 @@ class Cars(
 class Contacts(val email: String,
                val phone: String)
 
-@JSONClass
 class RelationShipStatus(
         val maritalStatus: String,
         val birthday: String)
@@ -39,7 +39,12 @@ class Boss(
         val bossName: String,
         @JSONExcludeItem
         val role: String,
-        @JSONObjectItem
+        @JSONCustomField("connections")
         val contacts: Contacts?,
         val extras: MutableList<*>?
+)
+
+class Compass(
+        val name: String,
+        val direction: Direction
 )
