@@ -5,12 +5,9 @@ A JSON generator library to serialize objects into JSON formated text implemente
 
 ## Custom Annotations
 
-@JSONClass: Used when a given class is to be serialized
-
-@JSONObjectItem: Used when a class property is a custom object and is intended to be serialized (use when @JSONClass is not used in the property`s class)
+@JJSONCustomField: Used to apply a custom property name in the final JSON string
 
 @JSONExcludeItem: Used to exclude a given class property is to be ignored when generating the JSON string
-
 
 ## How to use
 
