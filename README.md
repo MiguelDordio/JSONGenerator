@@ -21,7 +21,6 @@ A JSON generator library to serialize objects into JSON formated text implemente
 
 Classes:
 ```kt
-@JSONClass
 class Cars(
         val brand: String,
         val model: String,
@@ -30,7 +29,6 @@ class Cars(
 class Contacts(val email: String,
                val phone: String)
 
-@JSONClass
 class RelationShipStatus(
         val maritalStatus: String,
         val birthday: String)
@@ -43,7 +41,6 @@ class Boss(
         val bossName: String,
         @JSONExcludeItem
         val role: String,
-        @JSONObjectItem
         val contacts: Contacts?,
         val extras: MutableList<*>?
 )
