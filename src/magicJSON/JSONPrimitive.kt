@@ -22,6 +22,10 @@ class JSONPrimitive(val key: String, val value: Any? = null) : JSONItem() {
         return "\"$key\":\"null\""
     }
 
+    private fun jsonObject(key: String): String {
+        return "\"" + key.capitalize() + "\"" + ":"
+    }
+
     override fun generateJSON(): String {
         val sb = StringBuilder()
         if (value != null) {
@@ -32,6 +36,7 @@ class JSONPrimitive(val key: String, val value: Any? = null) : JSONItem() {
                 is Float -> sb.append(jsonNumber(key, value))
                 is Double -> sb.append(jsonNumber(key, value))
                 is Char -> sb.append(jsonChar(key, value))
+                is JSONObject -> sb.append(jsonObject(key))
                 else -> {
                     print("No match found")
                 }
@@ -42,6 +47,9 @@ class JSONPrimitive(val key: String, val value: Any? = null) : JSONItem() {
     }
 
     override fun accept(v: JSONVisitor) {
-        v.visitJSONPrimitive(this)
+        if (v.visitJSONPrimitive(this)) {
+            if (value is JSONObject)
+                value.accept(v)
+        }
     }
 }

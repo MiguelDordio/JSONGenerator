@@ -4,7 +4,6 @@ class JSONInspector : JSONVisitor {
 
     private val components = hashMapOf<String, Any?>()
     private var jsonText = StringBuilder()
-    private var firstObject: Boolean = true
     private var mapPrinting: Boolean = false
 
     private val allStrings = mutableListOf<String>()
@@ -14,12 +13,8 @@ class JSONInspector : JSONVisitor {
      */
 
     override fun visitJSONObject(node: JSONObject): Boolean {
-        if (firstObject) firstObject = false
-        else {
-            if (node.key != "") jsonText.append("\"${node.key?.capitalize()}\":{")
-            else jsonText.append("{")
-        }
-        node.key?.let { components.put(it, node.value) }
+        jsonText.append("{")
+        node::class.simpleName?.let { components.put(it, node.value) }
         return true
     }
 
@@ -30,7 +25,9 @@ class JSONInspector : JSONVisitor {
     }
 
     override fun visitJSONPrimitive(node: JSONPrimitive): Boolean {
-        jsonText.append(node.generateJSON() + ",")
+        jsonText.append(node.generateJSON())
+        if (jsonText.last() != ':')
+            jsonText.append(",")
         node.key.let { components.put(it, node) }
 
         if (node.value is String)
@@ -58,17 +55,17 @@ class JSONInspector : JSONVisitor {
     }
 
     fun objectToJSON(obj: Any): String {
-        val node = JSONObject("", obj)
+        val node = JSONObject(obj)
         node.accept(this)
         jsonText.setLength(jsonText.length - 1)
-        return if(components.size > 1) "{$jsonText}" else "$jsonText"
+        return "$jsonText"
     }
 
     fun objectToJSONPrettyPrint(obj: Any): String {
-        val node = JSONObject("", obj)
+        val node = JSONObject(obj)
         node.accept(this)
         jsonText.setLength(jsonText.length - 1)
-        val finalJSONText: String = if(components.size > 1) "{$jsonText}" else "$jsonText"
+        val finalJSONText = "$jsonText"
         return prettyPrintJSON(finalJSONText)
     }
 
@@ -151,7 +148,7 @@ class JSONInspector : JSONVisitor {
      */
 
     fun getAllStrings(obj: Any): MutableList<String> {
-        val node = JSONObject("", obj)
+        val node = JSONObject(obj)
         node.accept(this)
         return allStrings
     }
