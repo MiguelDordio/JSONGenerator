@@ -48,3 +48,9 @@ class Compass(
         val name: String,
         val direction: Direction
 )
+
+class Employee(
+        val employeeName: String,
+        val age: Int,
+        val boss: Boss
+)

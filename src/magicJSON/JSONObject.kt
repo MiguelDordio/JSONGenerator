@@ -5,15 +5,18 @@ import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 
-class JSONObject(val value: Any? = null) : JSONItem() {
+class JSONObject(val value: Any? = null) : Element {
 
-    private var elements = mutableMapOf<String, Element>()
+    var elements = mutableMapOf<String, Element>()
 
     private fun identify(value: Any) {
         value::class.declaredMemberProperties.forEach {
             if (it.findAnnotation<JSONCustomField>() != null) {
                 val fieldName = it.findAnnotation<JSONCustomField>()?.name
-                val node = fieldName?.let { newName -> JSONPrimitive(newName, JSONObject(it.getter.call(value))) }
+                val node: JSONPrimitive? = if (it.getter.call(value) != null)
+                    fieldName?.let { newName -> JSONPrimitive(newName, JSONObject(it.getter.call(value))) }
+                else
+                    fieldName?.let { newName -> JSONPrimitive(newName, null) }
                 if (node != null)
                     elements.put(it.name, node)
             } else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
@@ -39,7 +42,10 @@ class JSONObject(val value: Any? = null) : JSONItem() {
                         val node = JSONPrimitive(it.name, it.getter.call(value))
                         elements.put(it.name, node)
                     } else {
-                        val node = JSONPrimitive(it.name, JSONObject(it.getter.call(value)))
+                        val node: JSONPrimitive = if (it.getter.call(value) != null)
+                            JSONPrimitive(it.name, JSONObject(it.getter.call(value)))
+                        else
+                            JSONPrimitive(it.name, null)
                         elements.put(it.name, node)
                     }
                 }
@@ -47,19 +53,15 @@ class JSONObject(val value: Any? = null) : JSONItem() {
         }
     }
 
-    override fun generateJSON(): String? {
-        TODO("Not yet implemented")
-    }
-
     override fun accept(v: JSONVisitor) {
+        if (value != null) {
+            identify(value)
+        }
         if (v.visitJSONObject(this)) {
-            if (value != null) {
-                identify(value)
-            }
             elements.forEach {
                 it.value.accept(v)
             }
-            v.visitExitJSONObject()
         }
+        v.visitExitJSONObject()
     }
 }
