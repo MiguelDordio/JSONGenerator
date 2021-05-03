@@ -4,12 +4,10 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Tree
 import org.eclipse.swt.widgets.TreeItem
 import visualizer.VisualMapping
-import java.io.File
-import java.nio.file.Path
 
 class JSONInspector : JSONVisitor {
 
-    private var jsonText = StringBuilder()
+    var jsonText = StringBuilder()
     private var mapPrinting: Boolean = false
     private val allStrings = mutableListOf<String>()
     private var tree: Tree? = null
@@ -18,9 +16,13 @@ class JSONInspector : JSONVisitor {
     /**
      * Core methods
      */
-    override fun visitJSONObject(node: JSONObject): Boolean {
-        jsonText.append("{")
 
+
+    override fun visitJSONObject(node: JSONObject): Boolean {
+        if (node.value != null)
+            jsonText.append("{")
+        else
+            jsonText.append("\"null\",")
         if (tree != null) {
             val treeNode: TreeItem = if (currentTreeNode == null)
                 TreeItem(tree, SWT.NONE)
@@ -30,37 +32,70 @@ class JSONInspector : JSONVisitor {
             treeNode.data = node.value
             currentTreeNode = treeNode
         }
-
         return true
     }
 
-    override fun visitExitJSONObject(): Boolean {
-        jsonText.setLength(jsonText.length - 1)
-        jsonText.append("},")
+    override fun visitInnerJSONObject(key: String): Boolean {
+        jsonText.append("\"" + key.capitalize() + "\"" + ":")
+        return true
+    }
+
+    override fun visitInnerJSONArray(key: String): Boolean {
+        jsonText.append("\"$key\":")
+        return true
+    }
+
+    override fun visitExitJSONObject(node: JSONObject): Boolean {
+        if (node.value != null) {
+            jsonText.setLength(jsonText.length - 1)
+            jsonText.append("},")
+        }
         if (tree != null)
             currentTreeNode = currentTreeNode!!.parentItem
         return true
+    }
+
+    /**
+     * JSONPrimitive to JSON format methods
+     */
+    fun jsonChar(key: String, character: Char): String {
+        return if (key != "") "\"$key\":\"$character\"" else "\"$character\""
+    }
+
+    fun jsonString(key: String, string: String): String {
+        return if (key != "") "\"$key\":\"$string\"" else "\"$string\""
+    }
+
+    fun jsonNumber(key: String, number: Any): String {
+        return "\"$key\":$number"
+    }
+
+    fun jsonBoolean(key: String, boolean: Boolean): String {
+        return if (boolean) "\"$key\":\"true\"" else "\"$key\":\"false\""
+    }
+
+    fun jsonNull(key: String): String {
+        return "\"$key\":\"null\""
     }
 
     override fun visitJSONPrimitive(node: JSONPrimitive): Boolean {
         val sb = StringBuilder()
         if (node.value!= null) {
             when (node.value) {
-                is String -> { sb.append(node.jsonString(node.key, node.value) + ",")
+                is String -> { sb.append(jsonString(node.key, node.value) + ",")
                     allStrings.add(node.value)
                 }
-                is Boolean -> sb.append(node.jsonBoolean(node.key, node.value)+ ",")
-                is Int -> sb.append(node.jsonNumber(node.key, node.value)+ ",")
-                is Float -> sb.append(node.jsonNumber(node.key, node.value)+ ",")
-                is Double -> sb.append(node.jsonNumber(node.key, node.value)+ ",")
-                is Char -> sb.append(node.jsonChar(node.key, node.value)+ ",")
-                is JSONObject -> sb.append(node.jsonObject(node.key, node.value))
+                is Boolean -> sb.append(jsonBoolean(node.key, node.value)+ ",")
+                is Int -> sb.append(jsonNumber(node.key, node.value)+ ",")
+                is Float -> sb.append(jsonNumber(node.key, node.value)+ ",")
+                is Double -> sb.append(jsonNumber(node.key, node.value)+ ",")
+                is Char -> sb.append(jsonChar(node.key, node.value)+ ",")
                 else -> {
                     print("No match found")
                 }
             }
         } else
-            sb.append(node.jsonNull(node.key)+ ",")
+            sb.append(jsonNull(node.key)+ ",")
         jsonText.append(sb.toString())
 
         // Create a new tree item
@@ -72,11 +107,18 @@ class JSONInspector : JSONVisitor {
         return true
     }
 
+
+    /**
+     * JSONArray to JSON format methods
+     */
     override fun visitJSONArray(node: JSONArray, isMap: Boolean): Boolean {
-        if (isMap) {
-            jsonText.append("\"${node.key}\":{")
-            mapPrinting = true
-        } else jsonText.append("\"${node.key}\":[")
+        if (node.rawList != null)
+            if (isMap) {
+                jsonText.append("{")
+                mapPrinting = true
+            } else jsonText.append("[")
+        else
+            jsonText.append("\"null\",")
         return true
     }
 
@@ -89,6 +131,10 @@ class JSONInspector : JSONVisitor {
         return true
     }
 
+
+    /**
+     * Print formats
+     */
     fun objectToJSON(obj: Any): String {
         val node = JSONObject(obj)
         node.accept(this)
@@ -177,10 +223,10 @@ class JSONInspector : JSONVisitor {
         }
     }
 
+
     /**
      * Misc methods
      */
-
     fun getAllStrings(obj: Any): MutableList<String> {
         val node = JSONObject(obj)
         node.accept(this)
@@ -191,6 +237,7 @@ class JSONInspector : JSONVisitor {
      * Writes the serialized contents to a file.
      * @param path path for the new file.
      */
+    /*
     fun writeToFile(path: Path) {
         val file = File(path.toString())
 
@@ -198,6 +245,8 @@ class JSONInspector : JSONVisitor {
             out.write("$jsonText")
         }
     }
+
+     */
 
     /**
      * Visualizer menu

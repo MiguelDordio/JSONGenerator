@@ -13,16 +13,15 @@ class JSONObject(val value: Any? = null) : Element {
         value::class.declaredMemberProperties.forEach {
             if (it.findAnnotation<JSONCustomField>() != null) {
                 val fieldName = it.findAnnotation<JSONCustomField>()?.name
-                val node: JSONPrimitive? = if (it.getter.call(value) != null)
-                    fieldName?.let { newName -> JSONPrimitive(newName, JSONObject(it.getter.call(value))) }
-                else
-                    fieldName?.let { newName -> JSONPrimitive(newName, null) }
-                if (node != null)
-                    elements.put(it.name, node)
+                val node = JSONObject(it.getter.call(value))
+                if (fieldName != null)
+                    elements.put(fieldName, node)
             } else if (it.returnType.classifier == List::class && it.getter.call(value) != null) {
-                val jsonArray = JSONArray(it.name, it.getter.call(value) as MutableList<Any>, false)
+                //val jsonArray = JSONArray(it.name, it.getter.call(value) as MutableList<Any>, false)
+                val jsonArray = JSONArray(it.getter.call(value), false)
                 elements.put(it.name, jsonArray)
             } else if (it.returnType.classifier == Map::class && it.getter.call(value) != null) {
+                /*
                 val innerMap = it.getter.call(value) as Map<*, *>
                 val mapItems = mutableListOf<Any>()
                 innerMap.forEach { entry ->
@@ -30,6 +29,8 @@ class JSONObject(val value: Any? = null) : Element {
                     mapItems.add(innerObj)
                 }
                 val jsonArray = JSONArray(it.name,mapItems, true)
+                 */
+                val jsonArray = JSONArray(it.getter.call(value), true)
                 elements.put(it.name, jsonArray)
             } else if ((it.returnType.classifier as KClass<out Any>).isSubclassOf(Enum::class)) {
                 val node = JSONPrimitive(it.name, it.getter.call(value).toString())
@@ -42,10 +43,7 @@ class JSONObject(val value: Any? = null) : Element {
                         val node = JSONPrimitive(it.name, it.getter.call(value))
                         elements.put(it.name, node)
                     } else {
-                        val node: JSONPrimitive = if (it.getter.call(value) != null)
-                            JSONPrimitive(it.name, JSONObject(it.getter.call(value)))
-                        else
-                            JSONPrimitive(it.name, null)
+                        val node = JSONObject(it.getter.call(value))
                         elements.put(it.name, node)
                     }
                 }
@@ -59,9 +57,13 @@ class JSONObject(val value: Any? = null) : Element {
         }
         if (v.visitJSONObject(this)) {
             elements.forEach {
+                if (it.value is JSONObject)
+                    v.visitInnerJSONObject(it.key)
+                else if (it.value is JSONArray)
+                    v.visitInnerJSONArray(it.key)
                 it.value.accept(v)
             }
         }
-        v.visitExitJSONObject()
+        v.visitExitJSONObject(this)
     }
 }

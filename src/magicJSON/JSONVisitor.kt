@@ -6,9 +6,11 @@ package magicJSON
  */
 interface JSONVisitor {
     fun visitJSONObject(node: JSONObject): Boolean
-    fun visitExitJSONObject(): Boolean
+    fun visitInnerJSONObject(key: String): Boolean
+    fun visitExitJSONObject(node: JSONObject): Boolean
 
     fun visitJSONArray(node: JSONArray, isMap: Boolean): Boolean
+    fun visitInnerJSONArray(key: String): Boolean
     fun visitExitJSONArray(): Boolean
 
     fun visitJSONPrimitive(node: JSONPrimitive): Boolean
