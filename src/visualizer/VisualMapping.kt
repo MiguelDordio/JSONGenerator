@@ -1,6 +1,5 @@
 package visualizer
 
-import expandAll
 import magicJSON.JSONInspector
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
@@ -112,5 +111,19 @@ class VisualMapping {
             if (it.text == "(object)")
                 searchTree(it, searchText)
         }
+    }
+
+    // auxiliares para varrer a árvore
+
+    fun Tree.expandAll() = traverse { it.expanded = true }
+
+    fun Tree.traverse(visitor: (TreeItem) -> Unit) {
+        fun TreeItem.traverse() {
+            visitor(this)
+            items.forEach {
+                it.traverse()
+            }
+        }
+        items.forEach { it.traverse() }
     }
 }
