@@ -1,5 +1,3 @@
-import Testinhos.Inject
-import Testinhos.Injector
 import java.awt.*
 import java.util.*
 import javax.swing.JButton
@@ -13,17 +11,19 @@ interface FrameSetup {
 interface Action {
     val name: String
     fun execute(window: Window)
+    fun undo(window: Window)
 }
 
 class Window {
     private val frame = JFrame()
 
-    // 1) eliminar dependencia de DefaultSetup;
     @Inject
     private lateinit var setup: FrameSetup
 
-    // 2) eliminar dependencias das acoes concretas (Center, Size); @InjectAdd
-    private val actions = mutableListOf<Action>(Move(), Size())
+    @InjectAdd
+    private lateinit var actions: MutableList<Action>
+
+    private var operations = mutableListOf<Action>()
 
     init {
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
@@ -54,6 +54,18 @@ class Window {
         frame.size = Dimension(width, height)
     }
 
+    fun saveOperation(action: Action) {
+        operations.add(action)
+    }
+
+    fun undo() {
+        if (operations.isNotEmpty()) {
+            val lastOp = operations.last()
+            if (lastOp::class != Undo::class)
+                lastOp.undo(this)
+            operations.removeAt(operations.size - 1)
+        }
+    }
 
 }
 
@@ -67,20 +79,49 @@ class DefaultSetup : FrameSetup {
 }
 
 class Move : Action {
+    lateinit var windowPos: Point
+
     override val name: String
         get() = "center"
 
     override fun execute(window: Window) {
+        windowPos = window.location
         window.move( 500, 500)
+        window.saveOperation(this)
+    }
+
+    override fun undo(window: Window) {
+        window.move(windowPos.x, windowPos.y)
     }
 }
 
 class Size : Action {
+    lateinit var windowSize : Dimension
+
     override val name: String
         get() = "change size"
 
     override fun execute(window: Window) {
+        windowSize = window.dimension
         window.setSize(500, 500)
+        window.saveOperation(this)
+    }
+
+    override fun undo(window: Window) {
+        window.setSize(windowSize.getWidth().toInt(), windowSize.getHeight().toInt())
+    }
+}
+
+class Undo : Action {
+    override val name: String
+        get() = "undo"
+
+    override fun execute(window: Window) {
+        window.undo()
+    }
+
+    override fun undo(window: Window) {
+        window.undo()
     }
 }
 

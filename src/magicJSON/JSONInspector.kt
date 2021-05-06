@@ -58,23 +58,23 @@ class JSONInspector : JSONVisitor {
     /**
      * JSONPrimitive to JSON format methods
      */
-    fun jsonChar(key: String, character: Char): String {
+    private fun jsonChar(key: String, character: Char): String {
         return if (key != "") "\"$key\":\"$character\"" else "\"$character\""
     }
 
-    fun jsonString(key: String, string: String): String {
+    private fun jsonString(key: String, string: String): String {
         return if (key != "") "\"$key\":\"$string\"" else "\"$string\""
     }
 
-    fun jsonNumber(key: String, number: Any): String {
+    private fun jsonNumber(key: String, number: Any): String {
         return "\"$key\":$number"
     }
 
-    fun jsonBoolean(key: String, boolean: Boolean): String {
+    private fun jsonBoolean(key: String, boolean: Boolean): String {
         return if (boolean) "\"$key\":\"true\"" else "\"$key\":\"false\""
     }
 
-    fun jsonNull(key: String): String {
+    private fun jsonNull(key: String): String {
         return "\"$key\":\"null\""
     }
 
@@ -234,31 +234,12 @@ class JSONInspector : JSONVisitor {
     }
 
     /**
-     * Writes the serialized contents to a file.
-     * @param path path for the new file.
-     */
-    /*
-    fun writeToFile(path: Path) {
-        val file = File(path.toString())
-
-        file.bufferedWriter().use { out ->
-            out.write("$jsonText")
-        }
-    }
-
-     */
-
-    /**
      * Visualizer menu
      */
-    fun openVisualMenu(rawData: Any): Boolean {
-        val visualMenu = VisualMapping()
-        tree = visualMenu.tree
-
+    fun openVisualMenu(rawData: Any, frameTree: Tree): Boolean {
+        tree = frameTree
         val data = JSONObject(rawData)
         data.accept(this)
-
-        visualMenu.open()
         return true
     }
 }

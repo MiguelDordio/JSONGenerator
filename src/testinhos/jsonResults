@@ -1,0 +1,9 @@
+{
+	"age": 23,
+	"Boss": {
+		"bossName": "Hugo",
+		"Connections": "null",
+		"Extras": "null"
+	},
+	"employeeName": "Miguel"
+}

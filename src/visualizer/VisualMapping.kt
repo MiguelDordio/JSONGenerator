@@ -1,5 +1,7 @@
 package visualizer
 
+import Inject
+import InjectAdd
 import magicJSON.JSONInspector
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
@@ -8,19 +10,43 @@ import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
+import java.io.File
+
+
+interface VisualFrameSetup {
+    val title: String
+    val layoutManager: GridLayout
+    val width: Int
+    val height: Int
+}
+
+interface VisualAction {
+    val name: String
+    fun execute(window: VisualMapping)
+    fun undo(window: VisualMapping)
+}
 
 
 class VisualMapping {
 
-    val shell: Shell = Shell(Display.getDefault())
-    val tree: Tree
-    var hightLightedItem: TreeItem? = null
+    private val shell: Shell = Shell(Display.getDefault())
+    lateinit var tree: Tree
+    var highLightedItem: TreeItem? = null
+    var selectedItem: TreeItem? = null
 
-    init {
+    @Inject
+    private lateinit var setup: VisualFrameSetup
+
+    @InjectAdd
+    private lateinit var actions: MutableList<VisualAction>
+
+    private var operations = mutableListOf<VisualAction>()
+
+    fun setupFrame() {
         // shell properties
-        shell.setSize(650, 600)
-        shell.text = "JSON Display"
-        shell.layout = GridLayout(2,false)
+        shell.setSize(setup.width, setup.height)
+        shell.text = setup.title
+        shell.layout = setup.layoutManager
 
         tree = Tree(shell, SWT.SINGLE or SWT.BORDER)
 
@@ -30,6 +56,7 @@ class VisualMapping {
         // handle tree clicks to show json
         tree.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent) {
+                selectedItem = tree.selection.first()
                 val jsonVisitor = JSONInspector()
                 val jsonData = tree.selection.first().data
                 if (jsonData is String)
@@ -64,9 +91,9 @@ class VisualMapping {
         button.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent) {
                 val keyword = keywordText.text
-                if (keyword == "" && hightLightedItem != null) {
-                    hightLightedItem!!.background = Color(Display.getCurrent(), 32, 32, 32)
-                    hightLightedItem = null
+                if (keyword == "" && highLightedItem != null) {
+                    highLightedItem!!.background = Color(Display.getCurrent(), 32, 32, 32)
+                    highLightedItem = null
                 } else {
                     val root: TreeItem = tree.getItem(0)
                     searchTree(root, keyword)
@@ -81,9 +108,23 @@ class VisualMapping {
         else 1 + parentItem.depth()
 
     fun open() {
+        //setupFrame()
         val display = Display.getDefault()
         tree.expandAll()
         shell.pack()
+
+        // add to the frame all actions as buttons
+        actions.forEach { action ->
+            val button = Button(shell, SWT.PUSH)
+            button.text = action.name
+            button.addSelectionListener(object : SelectionAdapter() {
+                override fun widgetSelected(e: SelectionEvent?) {
+                    super.widgetSelected(e)
+                    action.execute(this@VisualMapping)
+                }
+            })
+        }
+
         // center shell
         val primary: Monitor = display.primaryMonitor
         val bounds: Rectangle = primary.bounds
@@ -100,13 +141,24 @@ class VisualMapping {
     }
 
     /**
+     * Receives raw object and serializes it to JSON
+     * Opens the visualizer
+     */
+    fun initializeJSON(obj: Any) {
+        setupFrame()
+        val jsonVisitor = JSONInspector()
+        jsonVisitor.openVisualMenu(obj, tree)
+        open()
+    }
+
+    /**
      * Search keyword by iterating the tree
      */
     fun searchTree(node: TreeItem, searchText: String) {
         node.items.forEach {
             if (it.data.toString().toUpperCase().contains(searchText.toUpperCase())) {
                 it.background = Color(Display.getCurrent(), 0, 0, 255)
-                hightLightedItem = it
+                highLightedItem = it
             }
             if (it.text == "(object)")
                 searchTree(it, searchText)
@@ -125,5 +177,35 @@ class VisualMapping {
             }
         }
         items.forEach { it.traverse() }
+    }
+
+    // Actions supported
+    fun editObject(name: String) {
+        if (selectedItem != null) {
+            selectedItem!!.text = name
+        }
+    }
+
+    fun writeObjectToFile(path: String) {
+        val file = File(path)
+        val jsonData = tree.selection.first().data
+        val jsonVisitor = JSONInspector()
+        val jsonFinalText = jsonVisitor.objectToJSONPrettyPrint(jsonData)
+        file.bufferedWriter().use { out ->
+            out.write(jsonFinalText)
+        }
+    }
+
+    fun openExternalWindow() {
+        open()
+    }
+
+    fun undo() {
+        if (operations.isNotEmpty()) {
+            val lastOp = operations.last()
+            //if (lastOp::class != UndoActio::class)
+            lastOp.undo(this)
+            operations.removeAt(operations.size - 1)
+        }
     }
 }
