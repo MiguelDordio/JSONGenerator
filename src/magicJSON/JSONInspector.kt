@@ -3,7 +3,6 @@ package magicJSON
 import org.eclipse.swt.SWT
 import org.eclipse.swt.widgets.Tree
 import org.eclipse.swt.widgets.TreeItem
-import visualizer.VisualMapping
 
 class JSONInspector : JSONVisitor {
 
@@ -149,77 +148,48 @@ class JSONInspector : JSONVisitor {
         return prettyPrintJSON("$jsonText")
     }
 
-    private fun prettyPrintJSON(unformattedJsonString: String): String {
-        val prettyJSONBuilder = StringBuilder()
-        var indentLevel = 0
-        var inQuote = false
-        var inArray = false
-        for (charFromUnformattedJson in unformattedJsonString.toCharArray()) {
-            when (charFromUnformattedJson) {
-                '"' -> {
-                    // switch the quoting status
-                    inQuote = !inQuote
-                    prettyJSONBuilder.append(charFromUnformattedJson)
+    fun prettyPrintJSON(noWhite: String): String {
+        val sb = java.lang.StringBuilder()
+        var tabCount = 0
+        var inQuotes = false
+        for (c in noWhite.toCharArray()) {
+            if (c == '"') {
+                inQuotes=!inQuotes;
+            }
+            if (!inQuotes) {
+                if (c == '{') {
+                    sb.append(c)
+                    sb.append(System.lineSeparator())
+                    tabCount++
+                    printTabs(sb, tabCount)
+                } else if (c == '}') {
+                    sb.append(System.lineSeparator())
+                    tabCount--
+                    printTabs(sb, tabCount)
+                    sb.append(c)
+                } else if (c == ',') {
+                    sb.append(c)
+                    sb.append(System.lineSeparator())
+                    printTabs(sb, tabCount)
+                } else if (c == '[') {
+                    sb.append(c)
+                    tabCount++
+                } else if (c == ']') {
+                    sb.append(c)
+                    tabCount--
+                } else {
+                    sb.append(c)
                 }
-                ' ' ->         // For space: ignore the space if it is not being quoted.
-                    if (inQuote) {
-                        prettyJSONBuilder.append(charFromUnformattedJson)
-                    }
-                '{' -> {
-                    if (inArray) {
-                        if (prettyJSONBuilder[prettyJSONBuilder.length - 4] != ',')
-                            prettyJSONBuilder.setLength(prettyJSONBuilder.length - 3)
-                        prettyJSONBuilder.append(charFromUnformattedJson)
-                        indentLevel++
-                        appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                    } else {
-                        // Starting a new block: increase the indent level
-                        prettyJSONBuilder.append(charFromUnformattedJson)
-                        indentLevel++
-                        appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                    }
-                }
-                '[' -> {
-                    inArray = true
-                    // Starting a new block: increase the indent level
-                    prettyJSONBuilder.append(charFromUnformattedJson)
-                    indentLevel++
-                    appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                }
-                '}' -> {
-                    // Ending a new block; decrese the indent level
-                    indentLevel--
-                    appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                    prettyJSONBuilder.append(charFromUnformattedJson)
-                }
-                ']' -> {
-                    // Ending a new block; decrese the indent level
-                    inArray = false
-                    indentLevel--
-                    appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                    prettyJSONBuilder.append(charFromUnformattedJson)
-                }
-                ',' -> {
-                    // Ending a json item; create a new line after
-                    prettyJSONBuilder.append(charFromUnformattedJson)
-                    if (!inQuote) {
-                        appendIndentedNewLine(indentLevel, prettyJSONBuilder)
-                    }
-                }
-                ':' -> {
-                    prettyJSONBuilder.append("$charFromUnformattedJson ")
-                }
-                else -> prettyJSONBuilder.append(charFromUnformattedJson)
+            } else {
+                sb.append(c);
             }
         }
-        return prettyJSONBuilder.toString()
+        return sb.toString()
     }
 
-    private fun appendIndentedNewLine(indentLevel: Int, stringBuilder: java.lang.StringBuilder) {
-        stringBuilder.append("\n")
-        for (i in 0 until indentLevel) {
-            // Assuming indention using 2 spaces
-            stringBuilder.append("\t")
+    private fun printTabs(sb: java.lang.StringBuilder, tabCount: Int) {
+        for (i in 0 until tabCount) {
+            sb.append('\t')
         }
     }
 

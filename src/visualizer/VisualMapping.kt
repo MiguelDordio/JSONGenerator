@@ -7,6 +7,7 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Color
+import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Rectangle
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
@@ -18,10 +19,14 @@ interface VisualFrameSetup {
     val layoutManager: GridLayout
     val width: Int
     val height: Int
+    val folderIconPath: String
+    val fileIconPath: String
 }
 
 interface VisualAction {
     val name: String
+    val includeTextBox: Boolean
+    var textBoxText: String
     fun execute(window: VisualMapping)
     fun undo(window: VisualMapping)
 }
@@ -91,10 +96,11 @@ class VisualMapping {
         button.addSelectionListener(object : SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent) {
                 val keyword = keywordText.text
-                if (keyword == "" && highLightedItem != null) {
+                if (highLightedItem != null) {
                     highLightedItem!!.background = Color(Display.getCurrent(), 32, 32, 32)
                     highLightedItem = null
-                } else {
+                }
+                if (keyword != "") {
                     val root: TreeItem = tree.getItem(0)
                     searchTree(root, keyword)
                 }
@@ -107,23 +113,30 @@ class VisualMapping {
         if(parentItem == null) 0
         else 1 + parentItem.depth()
 
-    fun open() {
+    private fun open() {
         //setupFrame()
         val display = Display.getDefault()
         tree.expandAll()
-        shell.pack()
 
         // add to the frame all actions as buttons
         actions.forEach { action ->
+            var keywordText: Text? = null
+            if (action.includeTextBox) {
+                keywordText = Text(shell, SWT.SINGLE or SWT.BORDER)
+            }
             val button = Button(shell, SWT.PUSH)
             button.text = action.name
             button.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent?) {
                     super.widgetSelected(e)
+                    if (keywordText != null) {
+                        action.textBoxText = keywordText.text
+                    }
                     action.execute(this@VisualMapping)
                 }
             })
         }
+        shell.pack()
 
         // center shell
         val primary: Monitor = display.primaryMonitor
@@ -156,7 +169,7 @@ class VisualMapping {
      */
     fun searchTree(node: TreeItem, searchText: String) {
         node.items.forEach {
-            if (it.data.toString().toUpperCase().contains(searchText.toUpperCase())) {
+            if (it.data?.toString()?.toUpperCase()?.contains(searchText.toUpperCase()) == true) {
                 it.background = Color(Display.getCurrent(), 0, 0, 255)
                 highLightedItem = it
             }
@@ -165,21 +178,30 @@ class VisualMapping {
         }
     }
 
-    // auxiliares para varrer a árvore
-
+    // ------ Tree iterators ------
     fun Tree.expandAll() = traverse { it.expanded = true }
 
+    /**
+     * Iterates the tree and applies custom icons if the setup provided them
+     */
     fun Tree.traverse(visitor: (TreeItem) -> Unit) {
+        items[0].image = Image(display, setup.folderIconPath)
         fun TreeItem.traverse() {
             visitor(this)
+            val folderIcon = Image(display, setup.folderIconPath)
+            val fileIcon = Image(display, setup.fileIconPath)
             items.forEach {
+                if (it.text != "(object)")
+                    it.image = fileIcon
+                else
+                    it.image = folderIcon
                 it.traverse()
             }
         }
         items.forEach { it.traverse() }
     }
 
-    // Actions supported
+    // ------ Actions supported ------
     fun editObject(name: String) {
         if (selectedItem != null) {
             selectedItem!!.text = name

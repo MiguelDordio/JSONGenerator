@@ -54,3 +54,8 @@ class Employee(
         val age: Int,
         val boss: Boss
 )
+
+class Folder(
+        val name: String,
+        val children: MutableList<Folder>?
+)
