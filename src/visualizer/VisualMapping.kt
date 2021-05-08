@@ -9,6 +9,7 @@ import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Rectangle
+import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import java.io.File
@@ -35,6 +36,7 @@ interface VisualAction {
 class VisualMapping {
 
     private val shell: Shell = Shell(Display.getDefault())
+    private var popup: Shell? = null
     lateinit var tree: Tree
     var highLightedItem: TreeItem? = null
     var selectedItem: TreeItem? = null
@@ -72,6 +74,10 @@ class VisualMapping {
                 labelJSON.requestLayout()
             }
         })
+
+        tree.addListener(SWT.MouseDoubleClick) {
+            callPopUp(it, shell)
+        }
 
         // depth event
         val label = Label(shell, SWT.NONE)
@@ -200,6 +206,60 @@ class VisualMapping {
         }
         items.forEach { it.traverse() }
     }
+
+    private fun callPopUp(e: Event, shell: Shell) {
+        if (popup == null) {
+
+            // popUp setup
+            val display = Display.getDefault()
+            popup = Shell(display)
+            popup!!.setSize(250, 200)
+            popup!!.layout = FillLayout()
+
+            // popUp components
+            val nameLabel = Label(popup, SWT.NONE)
+            val valText = Text(popup, SWT.SINGLE or SWT.BORDER)
+            val okBtn = Button(popup, SWT.PUSH)
+            okBtn.text = "Apply"
+
+            // get selected tree item data
+            selectedItem = tree.selection.first()
+            val jsonData = tree.selection.first().data
+
+            // fill popUp components
+            if (jsonData is String) {
+                val cleanedData = jsonData.filterNot { c -> "\"".contains(c)}
+                nameLabel.text = cleanedData.substringBefore(":")
+                valText.text = cleanedData.substringAfter(":").substringBefore(",")
+            }
+
+            // button event - apply new text and close popUp
+            okBtn.addSelectionListener(object: SelectionAdapter() {
+                override fun widgetSelected(e: SelectionEvent) {
+                    val finalText = "\"" + nameLabel.text + "\"" + ":" + "\"" + valText.text + "\","
+                    selectedItem!!.text = finalText
+                    hidePopUp()
+                }
+            })
+
+            // open new popUp
+            //popup!!.setLocation(shell.location.x + e.x, shell.location.y + e.y)
+            popup!!.open()
+            shell.forceFocus()
+            while (!popup!!.isDisposed) {
+                if (!display.readAndDispatch()) display.sleep()
+            }
+            display.dispose()
+        }
+    }
+
+    private fun hidePopUp() {
+        if (popup != null && !popup!!.isDisposed) {
+            popup!!.close()
+            popup = null
+        }
+    }
+
 
     // ------ Actions supported ------
     fun editObject(name: String) {
