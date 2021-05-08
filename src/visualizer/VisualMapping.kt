@@ -9,7 +9,6 @@ import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Color
 import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Rectangle
-import org.eclipse.swt.layout.FillLayout
 import org.eclipse.swt.layout.GridLayout
 import org.eclipse.swt.widgets.*
 import java.io.File
@@ -22,6 +21,7 @@ interface VisualFrameSetup {
     val height: Int
     val folderIconPath: String
     val fileIconPath: String
+    val nodeNameByProperty: String
 }
 
 interface VisualAction {
@@ -49,7 +49,10 @@ class VisualMapping {
 
     private var operations = mutableListOf<VisualAction>()
 
-    fun setupFrame() {
+    /************************
+     * Visual Menu Setup
+     *************************/
+    private fun setupFrame() {
         // shell properties
         shell.setSize(setup.width, setup.height)
         shell.text = setup.title
@@ -76,7 +79,7 @@ class VisualMapping {
         })
 
         tree.addListener(SWT.MouseDoubleClick) {
-            callPopUp(it, shell)
+            callPopUp(shell)
         }
 
         // depth event
@@ -91,7 +94,6 @@ class VisualMapping {
                 label.text = item.depth().toString()
             }
         })
-
 
         // search event
         val keywordText = Text(shell, SWT.SINGLE or SWT.BORDER)
@@ -113,11 +115,6 @@ class VisualMapping {
             }
         })
     }
-
-    // find node depth
-    fun TreeItem.depth(): Int =
-        if(parentItem == null) 0
-        else 1 + parentItem.depth()
 
     private fun open() {
         //setupFrame()
@@ -159,10 +156,8 @@ class VisualMapping {
         display.dispose()
     }
 
-    /**
-     * Receives raw object and serializes it to JSON
-     * Opens the visualizer
-     */
+    // Receives raw object and serializes it to JSON
+    // Opens the visualizer
     fun initializeJSON(obj: Any) {
         setupFrame()
         val jsonVisitor = JSONInspector()
@@ -170,9 +165,39 @@ class VisualMapping {
         open()
     }
 
-    /**
-     * Search keyword by iterating the tree
-     */
+    /************************
+     * JSON Tree methods
+     *************************/
+    private fun Tree.expandAll() = traverse { it.expanded = true }
+
+    // Iterates the tree and applies custom icons if the setup provided them
+    private fun Tree.traverse(visitor: (TreeItem) -> Unit) {
+        items[0].image = Image(display, setup.folderIconPath)
+        fun TreeItem.traverse() {
+            visitor(this)
+            val folderIcon = Image(display, setup.folderIconPath)
+            val fileIcon = Image(display, setup.fileIconPath)
+            items.forEach {
+                if (it.text != "(object)") {
+                    it.image = fileIcon
+                    if (setup.nodeNameByProperty != "" && it.text.contains(setup.nodeNameByProperty)) {
+                        val pair = cleanJSONProperty(it.data as String)
+                        it.text = pair.second
+                    }
+                }else
+                    it.image = folderIcon
+                it.traverse()
+            }
+        }
+        items.forEach { it.traverse() }
+    }
+
+    // find node depth
+    fun TreeItem.depth(): Int =
+        if(parentItem == null) 0
+        else 1 + parentItem.depth()
+
+    // allows the user to search the tree for a given keyword
     fun searchTree(node: TreeItem, searchText: String) {
         node.items.forEach {
             if (it.data?.toString()?.toUpperCase()?.contains(searchText.toUpperCase()) == true) {
@@ -184,37 +209,15 @@ class VisualMapping {
         }
     }
 
-    // ------ Tree iterators ------
-    fun Tree.expandAll() = traverse { it.expanded = true }
-
-    /**
-     * Iterates the tree and applies custom icons if the setup provided them
-     */
-    fun Tree.traverse(visitor: (TreeItem) -> Unit) {
-        items[0].image = Image(display, setup.folderIconPath)
-        fun TreeItem.traverse() {
-            visitor(this)
-            val folderIcon = Image(display, setup.folderIconPath)
-            val fileIcon = Image(display, setup.fileIconPath)
-            items.forEach {
-                if (it.text != "(object)")
-                    it.image = fileIcon
-                else
-                    it.image = folderIcon
-                it.traverse()
-            }
-        }
-        items.forEach { it.traverse() }
-    }
-
-    private fun callPopUp(e: Event, shell: Shell) {
+    // PopUp when user double clicks a tree item
+    private fun callPopUp(shell: Shell) {
         if (popup == null) {
 
             // popUp setup
             val display = Display.getDefault()
             popup = Shell(display)
             popup!!.setSize(250, 200)
-            popup!!.layout = FillLayout()
+            popup!!.layout = GridLayout(2, false)
 
             // popUp components
             val nameLabel = Label(popup, SWT.NONE)
@@ -228,9 +231,9 @@ class VisualMapping {
 
             // fill popUp components
             if (jsonData is String) {
-                val cleanedData = jsonData.filterNot { c -> "\"".contains(c)}
-                nameLabel.text = cleanedData.substringBefore(":")
-                valText.text = cleanedData.substringAfter(":").substringBefore(",")
+                val pair = cleanJSONProperty(jsonData)
+                nameLabel.text = pair.first
+                valText.text = pair.second
             }
 
             // button event - apply new text and close popUp
@@ -243,7 +246,7 @@ class VisualMapping {
             })
 
             // open new popUp
-            //popup!!.setLocation(shell.location.x + e.x, shell.location.y + e.y)
+            popup!!.pack()
             popup!!.open()
             shell.forceFocus()
             while (!popup!!.isDisposed) {
@@ -260,8 +263,17 @@ class VisualMapping {
         }
     }
 
+    private fun cleanJSONProperty(rawProperty: String) : Pair<String, String> {
+        val cleanedData = rawProperty.filterNot { c -> "\"".contains(c)}
+        val propName = cleanedData.substringBefore(":")
+        val propData = cleanedData.substringAfter(":").substringBefore(",")
+        return Pair(propName, propData)
+    }
 
-    // ------ Actions supported ------
+
+    /************************
+     * Actions Supported
+     *************************/
     fun editObject(name: String) {
         if (selectedItem != null) {
             selectedItem!!.text = name
@@ -276,10 +288,6 @@ class VisualMapping {
         file.bufferedWriter().use { out ->
             out.write(jsonFinalText)
         }
-    }
-
-    fun openExternalWindow() {
-        open()
     }
 
     fun undo() {

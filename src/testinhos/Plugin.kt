@@ -9,7 +9,7 @@ class VisualSetup : VisualFrameSetup {
     override val title: String
         get() = "Json Visual Display"
     override val layoutManager: GridLayout
-        get() = GridLayout(2, false)
+        get() = GridLayout(4, true)
     override val width: Int
         get() = 650
     override val height: Int
@@ -18,6 +18,8 @@ class VisualSetup : VisualFrameSetup {
         get() = "folderIcon.png"
     override val fileIconPath: String
         get() = "fileIcon.png"
+    override val nodeNameByProperty: String
+        get() = ""
 }
 
 
