@@ -19,8 +19,9 @@ interface VisualFrameSetup {
     val layoutManager: GridLayout
     val width: Int
     val height: Int
-    val folderIconPath: String
-    val fileIconPath: String
+    val jsonObjectIcon: String
+    val jsonPrimitiveIcon: String
+    val jsonArrayIcon: String
     val nodeNameByProperty: String
 }
 
@@ -29,7 +30,6 @@ interface VisualAction {
     val includeTextBox: Boolean
     var textBoxText: String
     fun execute(window: VisualMapping)
-    fun undo(window: VisualMapping)
 }
 
 
@@ -172,11 +172,11 @@ class VisualMapping {
 
     // Iterates the tree and applies custom icons if the setup provided them
     private fun Tree.traverse(visitor: (TreeItem) -> Unit) {
-        items[0].image = Image(display, setup.folderIconPath)
+        items[0].image = Image(display, setup.jsonObjectIcon)
         fun TreeItem.traverse() {
             visitor(this)
-            val folderIcon = Image(display, setup.folderIconPath)
-            val fileIcon = Image(display, setup.fileIconPath)
+            val folderIcon = Image(display, setup.jsonObjectIcon)
+            val fileIcon = Image(display, setup.jsonPrimitiveIcon)
             items.forEach {
                 if (it.text != "(object)") {
                     it.image = fileIcon
@@ -287,15 +287,6 @@ class VisualMapping {
         val jsonFinalText = jsonVisitor.objectToJSONPrettyPrint(jsonData)
         file.bufferedWriter().use { out ->
             out.write(jsonFinalText)
-        }
-    }
-
-    fun undo() {
-        if (operations.isNotEmpty()) {
-            val lastOp = operations.last()
-            //if (lastOp::class != UndoActio::class)
-            lastOp.undo(this)
-            operations.removeAt(operations.size - 1)
         }
     }
 }

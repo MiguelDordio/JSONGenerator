@@ -14,10 +14,12 @@ class VisualSetup : VisualFrameSetup {
         get() = 650
     override val height: Int
         get() = 600
-    override val folderIconPath: String
-        get() = "folderIcon.png"
-    override val fileIconPath: String
-        get() = "fileIcon.png"
+    override val jsonObjectIcon: String
+        get() = "PrimitiveIcon.png"
+    override val jsonPrimitiveIcon: String
+        get() = "ObjectIcon.png"
+    override val jsonArrayIcon: String
+        get() = "arrayIcon.png"
     override val nodeNameByProperty: String
         get() = ""
 }
@@ -34,10 +36,6 @@ class ObjectEditor : VisualAction {
     override fun execute(window: VisualMapping) {
         window.editObject(textBoxText)
     }
-    override fun undo(window: VisualMapping) {
-        // TODO
-        window.undo()
-    }
 }
 
 class FileWriter : VisualAction {
@@ -50,27 +48,5 @@ class FileWriter : VisualAction {
 
     override fun execute(window: VisualMapping) {
         window.writeObjectToFile("/Users/migueloliveira/IdeaProjects/JSONGenerator/src/Testinhos/jsonResults")
-    }
-    override fun undo(window: VisualMapping) {
-        // TODO
-        window.undo()
-    }
-
-}
-
-class UndoAction : VisualAction {
-    override val name: String
-        get() = "undo"
-    override val includeTextBox: Boolean
-        get() = false
-    override var textBoxText: String = ""
-        get() = TODO("Not yet implemented")
-
-    override fun execute(window: VisualMapping) {
-        window.undo()
-    }
-    override fun undo(window: VisualMapping) {
-        // TODO
-        window.undo()
     }
 }
