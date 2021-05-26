@@ -2,7 +2,7 @@ package visualizer
 
 import Inject
 import InjectAdd
-import magicJSON.JSONInspector
+import magicJSON.*
 import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
@@ -47,8 +47,6 @@ class VisualMapping {
     @InjectAdd
     private lateinit var actions: MutableList<VisualAction>
 
-    private var operations = mutableListOf<VisualAction>()
-
     /************************
      * Visual Menu Setup
      *************************/
@@ -69,12 +67,9 @@ class VisualMapping {
                 selectedItem = tree.selection.first()
                 val jsonVisitor = JSONInspector()
                 val jsonData = tree.selection.first().data
-                if (jsonData is String)
-                    labelJSON.text = jsonData
-                else
-                    labelJSON.text = jsonVisitor.objectToJSONPrettyPrint(jsonData)
-                println("selected: " + tree.selection.first().data)
+                labelJSON.text = jsonVisitor.treeItemToJSONPrettyPrint(jsonData as Element)
                 labelJSON.requestLayout()
+                shell.pack()
             }
         })
 
@@ -160,8 +155,11 @@ class VisualMapping {
     // Opens the visualizer
     fun initializeJSON(obj: Any) {
         setupFrame()
-        val jsonVisitor = JSONInspector()
-        jsonVisitor.openVisualMenu(obj, tree)
+        val jsonSerializer = JSONSerializer()
+        val serializedObj = jsonSerializer.identify(obj)
+        val jsonVisualTree = JSONVisualTree()
+        val rootJsonObject = JSONObject(serializedObj)
+        jsonVisualTree.createTree(rootJsonObject, tree)
         open()
     }
 
@@ -175,17 +173,20 @@ class VisualMapping {
         items[0].image = Image(display, setup.jsonObjectIcon)
         fun TreeItem.traverse() {
             visitor(this)
-            val folderIcon = Image(display, setup.jsonObjectIcon)
-            val fileIcon = Image(display, setup.jsonPrimitiveIcon)
+            val jsonObjectIcon = Image(display, setup.jsonObjectIcon)
+            val jsonArrayIcon = Image(display, setup.jsonArrayIcon)
+            val jsonPrimitiveIcon = Image(display, setup.jsonPrimitiveIcon)
             items.forEach {
                 if (it.text != "(object)") {
-                    it.image = fileIcon
+                    it.image = jsonPrimitiveIcon
                     if (setup.nodeNameByProperty != "" && it.text.contains(setup.nodeNameByProperty)) {
                         val pair = cleanJSONProperty(it.data as String)
                         it.text = pair.second
                     }
-                }else
-                    it.image = folderIcon
+                } else if (it.data != null && it.data::class == LinkedHashMap::class && it.text != "(object)") {
+                    it.image = jsonArrayIcon
+                } else
+                    it.image = jsonObjectIcon
                 it.traverse()
             }
         }

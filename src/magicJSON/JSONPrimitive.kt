@@ -8,4 +8,10 @@ class JSONPrimitive(val key: String, val value: Any? = null) : Element {
                 value.accept(v)
         }
     }
+
+    override fun toString(): String {
+        return "\"$key\""
+    }
+
+
 }

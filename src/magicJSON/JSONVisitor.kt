@@ -11,7 +11,7 @@ interface JSONVisitor {
 
     fun visitJSONArray(node: JSONArray, isMap: Boolean): Boolean
     fun visitInnerJSONArray(key: String): Boolean
-    fun visitExitJSONArray(): Boolean
+    fun visitExitJSONArray(node: JSONArray): Boolean
 
     fun visitJSONPrimitive(node: JSONPrimitive): Boolean
 }

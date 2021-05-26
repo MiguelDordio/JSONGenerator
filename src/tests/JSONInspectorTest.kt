@@ -1,7 +1,6 @@
 package tests
 
 import magicJSON.JSONInspector
-import magicJSON.JSONPrimitive
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.Assertions
@@ -98,7 +97,8 @@ class JSONInspectorTest {
                 "\t\t\"email\": \"mig@gmail.com\",\n" +
                 "\t\t\"phone\": \"999888777\"\n" +
                 "\t},\n" +
-                "\t\"extras\": [{\n" +
+                "\t\"extras\": [" +
+                "\n\t\t{\n" +
                 "\t\t\t\"birthday\": \"09-12-1978\",\n" +
                 "\t\t\t\"maritalStatus\": \"Married\"\n" +
                 "\t\t},\n" +

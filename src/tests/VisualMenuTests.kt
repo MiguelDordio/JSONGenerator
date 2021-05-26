@@ -24,8 +24,8 @@ fun main() {
     //print(jsonVisitor.objectToJSONPrettyPrint(mainFolder))
     //print(jsonVisitor.objectToJSONPrettyPrint(employee))
 
-    print(jsonVisitor.objectToJSONPrettyPrint(employee))
+    //print(jsonVisitor.objectToJSONPrettyPrint(employee))
 
-    //val w = Injector.create(VisualMapping::class)
-    //w.initializeJSON(mainFolder)
+    val w = Injector.create(VisualMapping::class)
+    w.initializeJSON(mainFolder)
 }

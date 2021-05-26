@@ -2,16 +2,18 @@ package magicJSON
 
 class JSONArray(val raw: Any? = null, val isMap: Boolean) : Element {
 
-    var elementsList = mutableListOf<Element>()
-    var elements = mutableMapOf<String, Element>()
+    private var elementsList = mutableListOf<Element>()
+    private var elements = mutableMapOf<String, Element>()
 
     init {
-        if (isMap) {
-            @Suppress("UNCHECKED_CAST")
-            elements = raw as MutableMap<String, Element>
-        }else {
-            @Suppress("UNCHECKED_CAST")
-            elementsList = raw as MutableList<Element>
+        if (raw != null) {
+            if (isMap) {
+                @Suppress("UNCHECKED_CAST")
+                elements = raw as MutableMap<String, Element>
+            }else {
+                @Suppress("UNCHECKED_CAST")
+                elementsList = raw as MutableList<Element>
+            }
         }
     }
 
@@ -29,7 +31,7 @@ class JSONArray(val raw: Any? = null, val isMap: Boolean) : Element {
                     it.accept(v)
                 }
             }
-            v.visitExitJSONArray()
+            v.visitExitJSONArray(this)
         }
     }
 }
