@@ -20,7 +20,7 @@ class Injector {
         val map: MutableMap<String, List<KClass<*>>> = mutableMapOf()
 
         init {
-            val scanner = Scanner(File("/Users/migueloliveira/IdeaProjects/JSONGenerator/src/testinhos/di.properties"))
+            val scanner = Scanner(File("/Users/migueloliveira/IdeaProjects/JSONGenerator/src/plugins/di.properties"))
             while(scanner.hasNextLine()) {
                 val line = scanner.nextLine()
                 val parts = line.split("=")

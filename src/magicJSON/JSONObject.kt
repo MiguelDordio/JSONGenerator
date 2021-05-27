@@ -9,6 +9,10 @@ class JSONObject(val elements: MutableMap<String, Element>? = null) : Element {
         elements?.set(name, value)
     }
 
+    override fun isEmpty(): Boolean {
+        return elements?.isEmpty() ?: true
+    }
+
 
     /**
      * Iterates the JSONObject to create the corresponding json string

@@ -17,6 +17,9 @@ class JSONArray(val raw: Any? = null, val isMap: Boolean) : Element {
         }
     }
 
+    override fun isEmpty(): Boolean {
+        return raw == null
+    }
 
     override fun accept(v: JSONVisitor) {
         if (v.visitJSONArray(this, isMap)) {

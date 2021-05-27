@@ -7,9 +7,10 @@ import org.eclipse.swt.SWT
 import org.eclipse.swt.events.SelectionAdapter
 import org.eclipse.swt.events.SelectionEvent
 import org.eclipse.swt.graphics.Color
-import org.eclipse.swt.graphics.Image
 import org.eclipse.swt.graphics.Rectangle
+import org.eclipse.swt.layout.GridData
 import org.eclipse.swt.layout.GridLayout
+import org.eclipse.swt.layout.RowLayout
 import org.eclipse.swt.widgets.*
 import java.io.File
 
@@ -19,10 +20,7 @@ interface VisualFrameSetup {
     val layoutManager: GridLayout
     val width: Int
     val height: Int
-    val jsonObjectIcon: String
-    val jsonPrimitiveIcon: String
-    val jsonArrayIcon: String
-    val nodeNameByProperty: String
+    fun applyRules(node: TreeItem, display: Display)
 }
 
 interface VisualAction {
@@ -38,7 +36,7 @@ class VisualMapping {
     private val shell: Shell = Shell(Display.getDefault())
     private var popup: Shell? = null
     lateinit var tree: Tree
-    var highLightedItem: TreeItem? = null
+    var highLightedItems = mutableListOf<TreeItem>()
     var selectedItem: TreeItem? = null
 
     @Inject
@@ -81,7 +79,7 @@ class VisualMapping {
         val label = Label(shell, SWT.NONE)
         label.text = "Nothing selected"
 
-        var button = Button(shell, SWT.PUSH)
+        val button = Button(shell, SWT.PUSH)
         button.text = "depth"
         button.addSelectionListener(object: SelectionAdapter() {
             override fun widgetSelected(e: SelectionEvent) {
@@ -92,23 +90,19 @@ class VisualMapping {
 
         // search event
         val keywordText = Text(shell, SWT.SINGLE or SWT.BORDER)
-        //keywordText.layoutData = GridData(GridData.FILL_HORIZONTAL)
-
-        button = Button(shell, SWT.PUSH)
-        button.text = "Search"
-        button.addSelectionListener(object : SelectionAdapter() {
-            override fun widgetSelected(e: SelectionEvent) {
-                val keyword = keywordText.text
-                if (highLightedItem != null) {
-                    highLightedItem!!.background = Color(Display.getCurrent(), 32, 32, 32)
-                    highLightedItem = null
-                }
-                if (keyword != "") {
-                    val root: TreeItem = tree.getItem(0)
-                    searchTree(root, keyword)
+        keywordText.message = "Search"
+        keywordText.addModifyListener {
+            val keyword = keywordText.text
+            if (highLightedItems.size > 0) {
+                highLightedItems.forEach {
+                    it.background = Color(Display.getCurrent(), 32, 32, 32)
                 }
             }
-        })
+            if (keyword != "") {
+                val root: TreeItem = tree.getItem(0)
+                searchTree(root, keyword)
+            }
+        }
     }
 
     private fun open() {
@@ -116,13 +110,20 @@ class VisualMapping {
         val display = Display.getDefault()
         tree.expandAll()
 
-        // add to the frame all actions as buttons
+        // group together all the actions
+        val group = Group(shell, SWT.NONE)
+        group.text = "Plugin Actions"
+        val gridData = GridData(SWT.FILL, SWT.FILL, true, false)
+        group.layoutData = gridData
+        group.layout = RowLayout(SWT.HORIZONTAL)
+
+        // add to the group all actions as buttons
         actions.forEach { action ->
             var keywordText: Text? = null
             if (action.includeTextBox) {
-                keywordText = Text(shell, SWT.SINGLE or SWT.BORDER)
+                keywordText = Text(group, SWT.SINGLE or SWT.BORDER)
             }
-            val button = Button(shell, SWT.PUSH)
+            val button = Button(group, SWT.PUSH)
             button.text = action.name
             button.addSelectionListener(object : SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent?) {
@@ -170,23 +171,10 @@ class VisualMapping {
 
     // Iterates the tree and applies custom icons if the setup provided them
     private fun Tree.traverse(visitor: (TreeItem) -> Unit) {
-        items[0].image = Image(display, setup.jsonObjectIcon)
         fun TreeItem.traverse() {
             visitor(this)
-            val jsonObjectIcon = Image(display, setup.jsonObjectIcon)
-            val jsonArrayIcon = Image(display, setup.jsonArrayIcon)
-            val jsonPrimitiveIcon = Image(display, setup.jsonPrimitiveIcon)
+            setup.applyRules(this, display)
             items.forEach {
-                if (it.text != "(object)") {
-                    it.image = jsonPrimitiveIcon
-                    if (setup.nodeNameByProperty != "" && it.text.contains(setup.nodeNameByProperty)) {
-                        val pair = cleanJSONProperty(it.data as String)
-                        it.text = pair.second
-                    }
-                } else if (it.data != null && it.data::class == LinkedHashMap::class && it.text != "(object)") {
-                    it.image = jsonArrayIcon
-                } else
-                    it.image = jsonObjectIcon
                 it.traverse()
             }
         }
@@ -199,14 +187,14 @@ class VisualMapping {
         else 1 + parentItem.depth()
 
     // allows the user to search the tree for a given keyword
-    fun searchTree(node: TreeItem, searchText: String) {
+    private fun searchTree(node: TreeItem, searchText: String) {
         node.items.forEach {
-            if (it.data?.toString()?.toUpperCase()?.contains(searchText.toUpperCase()) == true) {
+            if (it.data?.toString()?.toUpperCase()?.contains(searchText.toUpperCase()) == true ||
+                it.text?.toString()?.toUpperCase()?.contains(searchText.toUpperCase()) == true) {
                 it.background = Color(Display.getCurrent(), 0, 0, 255)
-                highLightedItem = it
+                highLightedItems.add(it)
             }
-            if (it.text == "(object)")
-                searchTree(it, searchText)
+            searchTree(it, searchText)
         }
     }
 
@@ -215,8 +203,8 @@ class VisualMapping {
         if (popup == null) {
 
             // popUp setup
-            val display = Display.getDefault()
-            popup = Shell(display)
+            val popPupDisplay = Display.getDefault()
+            popup = Shell(popPupDisplay)
             popup!!.setSize(250, 200)
             popup!!.layout = GridLayout(2, false)
 
@@ -231,17 +219,19 @@ class VisualMapping {
             val jsonData = tree.selection.first().data
 
             // fill popUp components
-            if (jsonData is String) {
-                val pair = cleanJSONProperty(jsonData)
-                nameLabel.text = pair.first
-                valText.text = pair.second
+            if (jsonData is JSONObject) {
+                jsonData.elements?.forEach {
+                    if (it.value is JSONPrimitive) {
+                        nameLabel.text = it.key
+                        valText.text = it.value.toString()
+                    }
+                }
             }
 
             // button event - apply new text and close popUp
             okBtn.addSelectionListener(object: SelectionAdapter() {
                 override fun widgetSelected(e: SelectionEvent) {
-                    val finalText = "\"" + nameLabel.text + "\"" + ":" + "\"" + valText.text + "\","
-                    selectedItem!!.text = finalText
+                    selectedItem!!.text = valText.text
                     hidePopUp()
                 }
             })
@@ -251,26 +241,16 @@ class VisualMapping {
             popup!!.open()
             shell.forceFocus()
             while (!popup!!.isDisposed) {
-                if (!display.readAndDispatch()) display.sleep()
+                if (!popPupDisplay.readAndDispatch()) popPupDisplay.sleep()
             }
-            display.dispose()
         }
     }
 
     private fun hidePopUp() {
         if (popup != null && !popup!!.isDisposed) {
             popup!!.close()
-            popup = null
         }
     }
-
-    private fun cleanJSONProperty(rawProperty: String) : Pair<String, String> {
-        val cleanedData = rawProperty.filterNot { c -> "\"".contains(c)}
-        val propName = cleanedData.substringBefore(":")
-        val propData = cleanedData.substringAfter(":").substringBefore(",")
-        return Pair(propName, propData)
-    }
-
 
     /************************
      * Actions Supported

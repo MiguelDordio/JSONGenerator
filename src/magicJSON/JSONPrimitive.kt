@@ -9,8 +9,12 @@ class JSONPrimitive(val key: String, val value: Any? = null) : Element {
         }
     }
 
+    override fun isEmpty(): Boolean {
+        return value == null
+    }
+
     override fun toString(): String {
-        return "\"$key\""
+        return "$value"
     }
 
 
