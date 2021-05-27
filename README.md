@@ -1,7 +1,6 @@
-# JSONGenerator
+# 1. Standart JSON Generator library 
 
 A JSON generator library to serialize objects into JSON formated text implemented in Kotlin
-
 
 ## Custom Annotations
 
@@ -12,7 +11,7 @@ A JSON generator library to serialize objects into JSON formated text implemente
 ## How to use
 
 1. Create a JSONInspector instance
-2. Add one of the library`s annotations to the desired object
+2. (Optional) Add one of the library`s annotations to the desired object
 3. Invoke either the .objectToJSON or .objectToJSONPrettyPrint acording to the desired results
 
 ## Examples
@@ -121,3 +120,35 @@ JSON output:
 	"weight": 65.4
 }
 ```
+
+# 2. GUI
+
+In order to enhance the visual experience of a json string, a simple GUI was developed to re-create the json generated from a given object
+
+## Functionalities
+
+* Get node depth
+* Search for a keyword
+* Interact with the json created
+
+
+# JSON Plugin
+
+To allow customization, the GUI enables the creation of custom plugins
+
+## GUI customizations
+
+* Name the GUI window
+* Define the GUI window size and layout
+* Define a custom rule to customize each visual json node
+
+## Plugin Actions
+
+Custom actions can be created to add extra functionalities, like:
+
+* Editing a node name
+* Export the json generated as a file
+
+![image](https://user-images.githubusercontent.com/32375361/119889584-a86c4200-bf2e-11eb-9eef-f166b247871c.png)
+
+
