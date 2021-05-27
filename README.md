@@ -132,7 +132,7 @@ In order to enhance the visual experience of a json string, a simple GUI was dev
 * Interact with the json created
 
 
-# JSON Plugin
+# 3. JSON Plugin
 
 To allow customization, the GUI enables the creation of custom plugins
 
@@ -142,12 +142,16 @@ To allow customization, the GUI enables the creation of custom plugins
 * Define the GUI window size and layout
 * Define a custom rule to customize each visual json node
 
+
 ## Plugin Actions
 
 Custom actions can be created to add extra functionalities, like:
 
 * Editing a node name
 * Export the json generated as a file
+
+
+## Plugin example
 
 ![image](https://user-images.githubusercontent.com/32375361/119889584-a86c4200-bf2e-11eb-9eef-f166b247871c.png)
 
